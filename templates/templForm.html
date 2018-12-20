@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+{{if .Success}}
+	<h1>"Выполнено добавление!"</h1>
+{{else}}
+	<h1>Contact</h1>
+	<form method="POST">
+		<label>ID:</label><br />
+		<input type="text" name="id"><br />
+		<label>Name:</label><br />
+		<input type="text" name="name"><br />
+		<label>age:</label><br />
+		<input type="text" name="age"><br />
+		<input type="submit">
+	</form>
+{{end}}
