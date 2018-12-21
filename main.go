@@ -15,11 +15,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var c [5]ContactDetails
+var c = make([]ContactDetails, 0, 20)
 var (
 	// key must be 16, 24 or 32 bytes long (AES-128, AES-192 or AES-256)
 	key   = []byte("super-secret-key")
 	store = sessions.NewCookieStore(key)
+	db    *sql.DB
 )
 
 type ViewData struct {
@@ -126,21 +127,20 @@ func Hello(w http.ResponseWriter, r *http.Request) {
 }
 
 func UsingTempl(w http.ResponseWriter, r *http.Request) {
-	/*var Users1 [5]User
+	Users1 := make([]User, len(c))
 
-	for i, _ := range Users1 {
-		User.Name= c[i].name
-		User.Age= pyraconv.ToInt64(c[i].age)
-		User.URL= "URLI1"}
-	}*/
+	for i := range c {
+		Users1[i] = User{Name: c[i].name, Age: pyraconv.ToInt64(c[i].age), URL: "URLI1"}
+	}
 
 	data := ViewData{
 		Title: "Users List",
-		Users: []User{
-			User{Name: c[0].name, Age: pyraconv.ToInt64(c[0].age), URL: "URLI1"},
-			User{Name: c[1].name, Age: pyraconv.ToInt64(c[1].age), URL: "URLI2"},
-			User{Name: c[2].name, Age: pyraconv.ToInt64(c[2].age), URL: "URLI3"},
-		},
+		Users: Users1,
+		// Users: []User{ //strconv
+		// 	User{Name: c[0].name, Age: pyraconv.ToInt64(c[0].age), URL: "URLI1"},
+		// 	User{Name: c[1].name, Age: pyraconv.ToInt64(c[1].age), URL: "URLI2"},
+		// 	User{Name: c[2].name, Age: pyraconv.ToInt64(c[2].age), URL: "URLI3"},
+		// },
 	}
 	tmpl, _ := template.ParseFiles("templates/index.html")
 	tmpl.Execute(w, data)
@@ -171,12 +171,12 @@ func UsingTempl2(w http.ResponseWriter, r *http.Request) {
 		name: r.FormValue("name"),
 		age:  r.FormValue("age"),
 	}
-	connStr := "user=postgres password=superuser dbname=Names sslmode=disable" //"postgres://postgres:psql@127.0.0.1:5433/Names?sslmode=disable"
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
+	// connStr := "user=postgres password=superuser dbname=Names sslmode=disable" //"postgres://postgres:psql@127.0.0.1:5433/Names?sslmode=disable"
+	// db, err := sql.Open("postgres", connStr)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer db.Close()
 
 	result, err := db.Exec("insert into Names (id, name, age) values ( $1, $2, $3)", //text
 		pyraconv.ToInt64(details.id), details.name, pyraconv.ToInt64(details.age))
@@ -208,19 +208,18 @@ func articlesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	connStr := "user=postgres password=superuser dbname=Names sslmode=disable" //"postgres://postgres:psql@127.0.0.1:5433/Names?sslmode=disable"
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
+	// connStr := "user=postgres password=superuser dbname=Names sslmode=disable" //"postgres://postgres:psql@127.0.0.1:5433/Names?sslmode=disable"
+	// db, err := sql.Open("postgres", connStr)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer db.Close()
 
 	result, err := db.Query("SELECT id, name, age FROM public.names;")
 	if err != nil {
 		panic(err)
 	}
 	defer result.Close()
-	contactDetails := []ContactDetails{}
 
 	for result.Next() {
 		p := ContactDetails{}
@@ -229,16 +228,10 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(err)
 			continue
 		}
-		contactDetails = append(contactDetails, p)
-	}
-	for i, p := range contactDetails {
-		fmt.Println(p.id, p.name, p.age)
-		c[i].id = p.id
-		c[i].name = p.name
-		c[i].age = p.age
+		c = append(c, p)
 	}
 
-	response := fmt.Sprintf("%s", contactDetails)
+	response := fmt.Sprintf("%s", c)
 	fmt.Fprint(w, response)
 }
 
@@ -283,6 +276,12 @@ func (amw *authenticationMiddleware) Middleware(next http.Handler) http.Handler 
 func main() {
 
 	var err error
+	connStr := "user=postgres password=superuser dbname=Names sslmode=disable" //"postgres://postgres:psql@127.0.0.1:5433/Names?sslmode=disable"
+	db, err = sql.Open("postgres", connStr)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
 
 	router := mux.NewRouter()
 	router.HandleFunc("/products/{category}/{id:[0-9]+}", productsHandler)

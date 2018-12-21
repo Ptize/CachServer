@@ -8,7 +8,7 @@
         <h1>{{ .Title}}</h1>
         <ul>
             {{range .Users}}
-            <div><b><a href={{.URL}}>{{ .Name }}</a></b>: {{ .Age }}</div>
+            <div><b><a href="{{ .URL }}" >{{ .Name }}</a></b>: {{ .Age }}</div>
                 {{else}}
             <li><b>no rows</b></li>
         {{end}}
